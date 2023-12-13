@@ -6,7 +6,7 @@ class UserProvider with ChangeNotifier {
 
   UserModel? get user => _userModel;
 
-  setUserModel(UserModel users) {
+  setUserModel(UserModel? users) {
     _userModel = users;
     notifyListeners();
   }

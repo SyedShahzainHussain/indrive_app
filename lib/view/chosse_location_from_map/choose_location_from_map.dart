@@ -249,126 +249,129 @@ class _ChooseLocationFromMapState extends State<ChooseLocationFromMap> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        GoogleMap(
-          padding: EdgeInsets.only(bottom: context.screenHeight * .15),
-          zoomControlsEnabled: false,
-          myLocationEnabled: true,
-          initialCameraPosition: const CameraPosition(
-            target: LatLng(0, 0),
-            zoom: 15,
-          ),
-          onCameraMove: _onCameraMove,
-          onMapCreated: (GoogleMapController controller) {
-            googleMapController.complete(controller);
-            newGoogleMapController = controller;
-            blackThemeGoogleMap();
-            currentPositioned();
-          },
-        ),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              alignment: Alignment.center,
-              width: context.screenWidth * .5,
-              padding: const EdgeInsets.all(10.0),
-              decoration: BoxDecoration(
-                  color: const Color(0xff7fbefb),
-                  borderRadius: BorderRadius.circular(5.0)),
-              child: Text(
-                address,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xff152633),
-                    ),
-              ),
+    return SafeArea(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          GoogleMap(
+            padding: EdgeInsets.only(bottom: context.screenHeight * .15),
+            zoomControlsEnabled: false,
+            myLocationEnabled: true,
+            initialCameraPosition: const CameraPosition(
+              target: LatLng(0, 0),
+              zoom: 15,
             ),
-            const Gap(10),
-            Image.asset(
-              "assets/images/map_icon.png",
-              width: 50,
-              height: 50,
-              color: const Color(0xff7fbefb),
-            ),
-          ],
-        ),
-        Positioned(
-          top: context.screenHeight * .05,
-          left: 20,
-          child: CircleAvatar(
-            backgroundColor: const Color(0xff272c32),
-            child: IconButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: AppColors.whiteColor,
-                )),
+            onCameraMove: _onCameraMove,
+            onMapCreated: (GoogleMapController controller) {
+              googleMapController.complete(controller);
+              newGoogleMapController = controller;
+              blackThemeGoogleMap();
+              currentPositioned();
+            },
           ),
-        ),
-        Positioned(
-            bottom: context.screenHeight * .02,
-            child: GestureDetector(
-              onTap: address.isEmpty
-                  ? null
-                  : () {
-                      final direction = Directions(
-                        locationName: address,
-                      );
-                      widget.isPickUp!
-                          ? context
-                              .read<AppInfo>()
-                              .updatePickUpAddressLocation(direction)
-                          : context
-                              .read<AppInfo>()
-                              .updateDropUpAddressLocation(direction);
-                      Navigator.pushNamedAndRemoveUntil(
-                          context, RouteNames.mainScreen, (route) => false);
-                    },
-              child: Container(
-                width: context.screenWidth * .9,
-                padding: const EdgeInsets.all(20.0),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                alignment: Alignment.center,
+                width: context.screenWidth * .5,
+                padding: const EdgeInsets.all(10.0),
                 decoration: BoxDecoration(
-                  color: const Color(0xff88da09),
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
+                    color: const Color(0xff7fbefb),
+                    borderRadius: BorderRadius.circular(5.0)),
                 child: Text(
-                  "Done",
+                  address,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                        color: const Color(0xff29363e),
+                  style: Theme.of(context).textTheme.labelMedium!.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: const Color(0xff152633),
                       ),
                 ),
               ),
-            )),
-        Positioned(
-          bottom: context.screenHeight * .15,
-          right: 10,
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xff272c32),
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            child: IconButton(
-              onPressed: () {
-                currentPositioned();
-              },
-              icon: const Icon(
-                Icons.send_sharp,
-                color: AppColors.whiteColor,
+              const Gap(10),
+              Image.asset(
+                "assets/images/map_icon.png",
+                width: 50,
+                height: 50,
+                color: const Color(0xff7fbefb),
               ),
+            ],
+          ),
+          Positioned(
+            top: context.screenHeight * .02,
+            left: 20,
+            child: CircleAvatar(
+              backgroundColor: const Color(0xff272c32),
+              child: IconButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: AppColors.whiteColor,
+                  )),
             ),
           ),
-        )
-      ],
+          Positioned(
+              bottom: context.screenHeight * .02,
+              child: GestureDetector(
+                onTap: address.isEmpty
+                    ? null
+                    : () {
+                        final direction = Directions(
+                          locationName: address,
+                          
+                        );
+                        widget.isPickUp!
+                            ? context
+                                .read<AppInfo>()
+                                .updatePickUpAddressLocation(direction)
+                            : context
+                                .read<AppInfo>()
+                                .updateDropUpAddressLocation(direction);
+                        Navigator.pushNamedAndRemoveUntil(
+                            context, RouteNames.mainScreen, (route) => false);
+                      },
+                child: Container(
+                  width: context.screenWidth * .9,
+                  padding: const EdgeInsets.all(20.0),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff88da09),
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  child: Text(
+                    "Done",
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                          color: const Color(0xff29363e),
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+              )),
+          Positioned(
+            bottom: context.screenHeight * .15,
+            right: 10,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xff272c32),
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              child: IconButton(
+                onPressed: () {
+                  currentPositioned();
+                },
+                icon: const Icon(
+                  Icons.send_sharp,
+                  color: AppColors.whiteColor,
+                ),
+              ),
+            ),
+          )
+        ],
+      ),
     );
   }
 }
