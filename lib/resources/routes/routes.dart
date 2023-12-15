@@ -3,6 +3,7 @@ import 'package:user_uber_app/resources/routes/routes_name.dart';
 import 'package:user_uber_app/view/chosse_location_from_map/choose_location_from_map.dart';
 import 'package:user_uber_app/view/loginScreen/login_screen.dart';
 import 'package:user_uber_app/view/mainScreen/main_screen.dart';
+import 'package:user_uber_app/view/selected_drivers_screen/selected_drivers_screen.dart';
 import 'package:user_uber_app/view/signUpScreen/sign_up_screen.dart';
 import 'package:user_uber_app/view/splashScreen/splash_screen.dart';
 
@@ -26,6 +27,10 @@ class Routes {
         final bool isPickUp = settings.arguments as bool;
         return MaterialPageRoute(
           builder: (context) => ChooseLocationFromMap(isPickUp: isPickUp),
+        );
+      case RouteNames.selectedDriver:
+        return MaterialPageRoute(
+          builder: (context) =>  const  SelectedDriversScreen(),
         );
       default:
         return MaterialPageRoute(builder: (ctx) {

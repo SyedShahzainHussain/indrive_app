@@ -4,7 +4,6 @@ import 'package:user_uber_app/assistants/request_assistant.dart';
 import 'package:user_uber_app/constants/constant.dart';
 import 'package:user_uber_app/extension/screenWidthHeight/mediaquery.dart';
 import 'package:user_uber_app/model/predicted_places.dart';
-import 'package:user_uber_app/resources/routes/routes_name.dart';
 import 'package:user_uber_app/widget/place_prediction_tile.dart';
 
 class BottomDraggableSheet extends StatefulWidget {
@@ -160,33 +159,33 @@ class _BottomDraggableSheetState extends State<BottomDraggableSheet> {
                 ],
               ),
               const Gap(10),
-              Row(
-                children: [
-                  const Gap(10),
-                  const Icon(
-                    Icons.location_on_outlined,
-                    color: Color(0xff75b8f6),
-                    size: 30,
-                  ),
-                  const Gap(10),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, RouteNames.chooseLocation,
-                            arguments: widget.isPickUp as bool);
-                      },
-                      child: Text(
-                        "Choose on map",
-                        style:
-                            Theme.of(context).textTheme.labelMedium!.copyWith(
-                                  color: const Color(0xff75b8f6),
-                                ),
-                      ),
-                    ),
-                  )
-                ],
-              ),
-              const Gap(10),
+              // Row(
+              //   children: [
+              //     const Gap(10),
+              //     const Icon(
+              //       Icons.location_on_outlined,
+              //       color: Color(0xff75b8f6),
+              //       size: 30,
+              //     ),
+              //     const Gap(10),
+              //     Expanded(
+              //       child: GestureDetector(
+              //         onTap: () {
+              //           Navigator.pushNamed(context, RouteNames.chooseLocation,
+              //               arguments: widget.isPickUp as bool);
+              //         },
+              //         child: Text(
+              //           "Choose on map",
+              //           style:
+              //               Theme.of(context).textTheme.labelMedium!.copyWith(
+              //                     color: const Color(0xff75b8f6),
+              //                   ),
+              //         ),
+              //       ),
+              //     )
+              //   ],
+              // ),
+              // const Gap(10),
               (placePredicted.isNotEmpty)
                   ? SizedBox(
                       height: 500,

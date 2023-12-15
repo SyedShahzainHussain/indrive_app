@@ -79,4 +79,26 @@ class AsistantsMethod {
 
     return distanceInfoModel;
   }
+
+// ! calculate the amount fare
+
+  static double calculatetheTotalAmountFareFromOriginToDestination(
+      DistanceInfoModel distanceInfoModel) {
+    // * per minutes
+    double timeTraveledFareAmountPerMinutes =
+        (distanceInfoModel.duration_value! / 60) * 0.1;
+    // * per distance
+    double distanceTravelFareAmountPerKilometer =
+        (distanceInfoModel.duration_value! / 1000) * 0.1;
+
+    // * calculate the total fare amount
+    double totalFareAmount =
+        timeTraveledFareAmountPerMinutes + distanceTravelFareAmountPerKilometer;
+
+    // * calculate the total local amount
+    double totalLocalFareAmount = totalFareAmount * 278.60;
+    
+    // * and return the local fare amount
+    return double.parse(totalLocalFareAmount.toStringAsFixed(1));
+  }
 }

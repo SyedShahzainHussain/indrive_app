@@ -4,4 +4,5 @@ class RouteNames {
   static const logInScreen = "log_in_screen";
   static const mainScreen = "main_screen";
   static const chooseLocation = "choose_location_screen";
+  static const selectedDriver = "selected_driver_screen";
 }

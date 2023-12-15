@@ -322,7 +322,6 @@ class _ChooseLocationFromMapState extends State<ChooseLocationFromMap> {
                     : () {
                         final direction = Directions(
                           locationName: address,
-                          
                         );
                         widget.isPickUp!
                             ? context
