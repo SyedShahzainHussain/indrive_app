@@ -10,4 +10,5 @@ class Directions {
     this.locationLongitude,
     this.locationLatitude,
   });
+  
 }

@@ -5,3 +5,4 @@ FirebaseAuth firebaseAuth = FirebaseAuth.instance;
 User? firebasecurrentUser;
 List driverslist = [];
 DistanceInfoModel? tripDistanceInfoModel;
+String? chooseDriverId;

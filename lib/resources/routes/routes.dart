@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:user_uber_app/resources/routes/routes_name.dart';
 import 'package:user_uber_app/view/chosse_location_from_map/choose_location_from_map.dart';
@@ -29,8 +30,10 @@ class Routes {
           builder: (context) => ChooseLocationFromMap(isPickUp: isPickUp),
         );
       case RouteNames.selectedDriver:
+        final referenceRideRequest = settings.arguments as DatabaseReference?;
         return MaterialPageRoute(
-          builder: (context) =>  const  SelectedDriversScreen(),
+          builder: (context) =>
+              SelectedDriversScreen(referenceRideRequest: referenceRideRequest),
         );
       default:
         return MaterialPageRoute(builder: (ctx) {

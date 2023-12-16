@@ -47,6 +47,7 @@ class _MainScreenState extends State<MainScreen> {
   bool activeNearByDriverKeyLoaded = false;
   BitmapDescriptor? activeNearbyIcon;
   List<ActiveNearByAvalableDrivers> onlineNearbyDrivers = [];
+  DatabaseReference? referenceRideRequest;
 
   // ! initial camereposition
 
@@ -335,8 +336,6 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-
-
   // ! black theme in google map
 
   void blackThemeGoogleMap() {
@@ -508,6 +507,36 @@ class _MainScreenState extends State<MainScreen> {
   // ! save ride information
 
   void saveRideRequestInformation() {
+    // ! save the ride request
+
+    referenceRideRequest =
+        FirebaseDatabase.instance.ref().child("All Ride Request").push();
+
+    var originLocation = context.read<AppInfo>().userPickUpAddress;
+    var pickUpLocation = context.read<AppInfo>().dropOfPickUpAddress;
+
+    Map originMapLocation = {
+      "latitude": originLocation!.locationLatitude,
+      "longitude": originLocation.locationLongitude
+    };
+    Map destinationMapLocation = {
+      "latitude": pickUpLocation!.locationLatitude,
+      "longitude": pickUpLocation.locationLongitude
+    };
+
+    Map userInformaionMap = {
+      "origin": originMapLocation,
+      "destination": destinationMapLocation,
+      "time": DateTime.now().toString(),
+      "userName": context.read<UserProvider>().user!.name,
+      "userPhone": context.read<UserProvider>().user!.phone,
+      "originAddress": originLocation.locationName,
+      "destinationAddress": pickUpLocation.locationName,
+      "driverId": "waiting",
+    };
+
+    referenceRideRequest!.set(userInformaionMap);
+
     onlineNearbyDrivers = GeoFireAssistant.activeNearByAvailableDriversList;
     searchNeariestDriver();
   }
@@ -516,6 +545,8 @@ class _MainScreenState extends State<MainScreen> {
 
   searchNeariestDriver() async {
     if (onlineNearbyDrivers.isEmpty) {
+      referenceRideRequest!.remove();
+
       setState(() {
         marker.clear();
         circle.clear();
@@ -544,13 +575,41 @@ class _MainScreenState extends State<MainScreen> {
       await databaseReference
           .child(onlinesNearbyDrivers[i].driverId.toString())
           .once()
-          .then((datasnapshot) {
+          .then((datasnapshot) async {
         var driverInfo = datasnapshot.snapshot.value;
         driverslist.clear();
         driverslist.add(driverInfo);
-        Navigator.pushNamed(context, RouteNames.selectedDriver);
+        var response = await Navigator.pushNamed(
+            context, RouteNames.selectedDriver,
+            arguments: referenceRideRequest);
+        if (response == "driverChoosed") {
+          FirebaseDatabase.instance
+              .ref()
+              .child("drivers")
+              .child(chooseDriverId!)
+              .once()
+              .then((snapshot) {
+            if (snapshot.snapshot.value != null) {
+              sendNotificationToDriver(chooseDriverId!);
+            }
+          });
+        } else {
+          Fluttertoast.showToast(msg: "This driver do not exists. Try again.");
+        }
       });
     }
+  }
+
+  // ! send notification to driver
+
+  sendNotificationToDriver(String chooseDriver) {
+    // * saving the rider request id
+    FirebaseDatabase.instance
+        .ref()
+        .child("drivers")
+        .child(chooseDriver)
+        .child("newRideStatus")
+        .set(referenceRideRequest!.key);
   }
 
   // ! user current location
@@ -559,12 +618,17 @@ class _MainScreenState extends State<MainScreen> {
     Position cPositioned = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
     userCurrentPosition = cPositioned;
-    LatLng latLngPositioned =
-        LatLng(userCurrentPosition!.latitude, userCurrentPosition!.longitude);
+    LatLng latLngPositioned = LatLng(
+      userCurrentPosition!.latitude,
+      userCurrentPosition!.longitude,
+    );
 
     newGoogleMapController!.animateCamera(
       CameraUpdate.newCameraPosition(
-        CameraPosition(target: latLngPositioned, zoom: 14),
+        CameraPosition(
+          target: latLngPositioned,
+          zoom: 14,
+        ),
       ),
     );
 
@@ -772,8 +836,9 @@ class _MainScreenState extends State<MainScreen> {
       for (ActiveNearByAvalableDrivers activeNearByAvalableDrivers
           in GeoFireAssistant.activeNearByAvailableDriversList) {
         final LatLng eachDriveLatLng = LatLng(
-            activeNearByAvalableDrivers.latitude!,
-            activeNearByAvalableDrivers.longitude!);
+          activeNearByAvalableDrivers.latitude!,
+          activeNearByAvalableDrivers.longitude!,
+        );
 
         Marker markers = Marker(
           markerId: MarkerId(activeNearByAvalableDrivers.driverId!),
