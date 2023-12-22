@@ -33,16 +33,23 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  // ! map controllers 
   final Completer<GoogleMapController> _googleMapController = Completer();
   GoogleMapController? newGoogleMapController;
-  Position? userCurrentPosition;
+  // ! scaffold state 
+  GlobalKey<ScaffoldState> sKey = GlobalKey<ScaffoldState>();
+
   var geolocator = Geolocator();
   LocationPermission? _locationPermission;
-  GlobalKey<ScaffoldState> sKey = GlobalKey<ScaffoldState>();
+  Position? userCurrentPosition;
+  // ! points
   List<LatLng> points = [];
   Set<Polyline> pLineCordinates = {};
+  // ! markers
   Set<Marker> marker = {};
+  // ! circle
   Set<Circle> circle = {};
+
   bool openNavigationDrawer = true;
   bool activeNearByDriverKeyLoaded = false;
   BitmapDescriptor? activeNearbyIcon;
@@ -68,6 +75,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       backgroundColor: AppColors.blackColor,
       key: sKey,
+      // * drawer widget
       drawer: Consumer<UserProvider>(
         builder: (context, value, _) => SizedBox(
           width: context.screenWidth * .6,
@@ -80,7 +88,7 @@ class _MainScreenState extends State<MainScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Google Map
+            // * Google Map
             GoogleMap(
               myLocationEnabled: true,
               zoomControlsEnabled: false,
@@ -96,12 +104,13 @@ class _MainScreenState extends State<MainScreen> {
                 blackThemeGoogleMap();
                 locateUserPositioned();
 
+                // * getting the user profile data
                 firebaseAuth.currentUser != null
                     ? AsistantsMethod.readCurrentOnlineUserInfo(context)
                     : null;
               },
             ),
-            // custom hamburger button for menu
+            // * custom hamburger button for menu
             Positioned(
               top: context.screenHeight * .02,
               left: 20,
@@ -121,7 +130,7 @@ class _MainScreenState extends State<MainScreen> {
                     )),
               ),
             )
-            // ui for searching locations
+            // * ui for searching locations
             ,
             Positioned(
               bottom: 0,
@@ -632,6 +641,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
 
+    // * get the formatted address 
     // ignore: use_build_context_synchronously
     await AsistantsMethod.searchAddressFromLangitudeandLatitude(
         userCurrentPosition!, context);
@@ -799,12 +809,12 @@ class _MainScreenState extends State<MainScreen> {
             }
 
             break;
-          // ! whenever any drive become none active
+          // ! whenever any driver become none active
           case Geofire.onKeyExited:
             GeoFireAssistant.removeActiveDriverNearby(map['key']);
             displayActiveDriversOnUserApp();
             break;
-          // ! whenever drive move
+          // ! whenever driver move
           case Geofire.onKeyMoved:
             ActiveNearByAvalableDrivers activeNearByAvalableDrivers =
                 ActiveNearByAvalableDrivers();
@@ -818,6 +828,7 @@ class _MainScreenState extends State<MainScreen> {
             break;
 
           case Geofire.onGeoQueryReady:
+          // ! when driver is ready to go 
             activeNearByDriverKeyLoaded = true;
             displayActiveDriversOnUserApp();
             break;

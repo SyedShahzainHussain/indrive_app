@@ -8,7 +8,7 @@ import 'package:user_uber_app/widget/place_prediction_tile.dart';
 
 class BottomDraggableSheet extends StatefulWidget {
   final bool? isPickUp;
-  BottomDraggableSheet({
+  const BottomDraggableSheet({
     super.key,
     this.isPickUp,
   });
