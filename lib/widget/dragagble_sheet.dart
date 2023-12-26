@@ -44,6 +44,7 @@ class _BottomDraggableSheetState extends State<BottomDraggableSheet> {
   TextEditingController mapControllerText = TextEditingController();
   late FocusNode _focusNode;
   List<PredictedPlace> placePredicted = [];
+  
   @override
   void initState() {
     super.initState();

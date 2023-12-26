@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:user_uber_app/assistants/request_assistant.dart';
 import 'package:user_uber_app/constants/constant.dart';
+import 'package:user_uber_app/global/global.dart';
 import 'package:user_uber_app/model/directon.dart';
 import 'package:user_uber_app/model/predicted_places.dart';
 import 'package:user_uber_app/provider/app_info_provider.dart';
@@ -54,6 +55,7 @@ class _PlacePredictionTileState extends State<PlacePredictionTile> {
       directions.locationLongitude =
           responseAPi["result"]["geometry"]["location"]["lng"];
       // ignore: use_build_context_synchronously
+      widget.isPickUp! ? "" : destinationAddress = directions.locationName;
       widget.isPickUp!
           ? context.read<AppInfo>().updatePickUpAddressLocation(directions)
           : context.read<AppInfo>().updateDropUpAddressLocation(directions);

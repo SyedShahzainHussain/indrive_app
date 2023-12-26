@@ -49,6 +49,8 @@ dependencies:
   flutter_polyline_points: ^2.0.0
   flutter_geofire: ^2.0.3
   flutter_rating_bar: ^4.0.1
+  animated_text_kit:
+  intl:
 dev_dependencies:
   flutter_test:
     sdk: flutter

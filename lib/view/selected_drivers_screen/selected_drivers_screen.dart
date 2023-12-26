@@ -20,7 +20,7 @@ class _SelectedDriversScreenState extends State<SelectedDriversScreen> {
 
   // ! getfareamountvechiletype
 
-  getfareAmountAccordingToVechileType(int index) {
+  String getfareAmountAccordingToVechileType(int index) {
     if (tripDistanceInfoModel != null) {
       if (driverslist[index]["car_details"]["type"] == "bikes") {
         fareAmount =
@@ -46,7 +46,6 @@ class _SelectedDriversScreenState extends State<SelectedDriversScreen> {
     }
     return fareAmount;
   }
- 
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +130,7 @@ class _SelectedDriversScreenState extends State<SelectedDriversScreen> {
                   children: [
                     Text(
                       "\$ ${getfareAmountAccordingToVechileType(index)}",
-                      style: Theme.of(context).textTheme.labelLarge!.copyWith(
+                      style: Theme.of(context).textTheme.labelSmall!.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.black54,
                           ),
@@ -141,7 +140,7 @@ class _SelectedDriversScreenState extends State<SelectedDriversScreen> {
                       tripDistanceInfoModel != null
                           ? tripDistanceInfoModel!.distance_text!
                           : "",
-                      style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                      style: Theme.of(context).textTheme.labelSmall!.copyWith(
                           fontWeight: FontWeight.bold, color: Colors.black54),
                     ),
                     const Gap(2),
@@ -149,7 +148,7 @@ class _SelectedDriversScreenState extends State<SelectedDriversScreen> {
                       tripDistanceInfoModel != null
                           ? tripDistanceInfoModel!.duration_text!
                           : "",
-                      style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                      style: Theme.of(context).textTheme.labelSmall!.copyWith(
                           fontWeight: FontWeight.bold, color: Colors.black54),
                     ),
                   ],

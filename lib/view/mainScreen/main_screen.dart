@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -21,8 +22,10 @@ import 'package:user_uber_app/provider/app_info_provider.dart';
 import 'package:user_uber_app/provider/user_provider.dart';
 import 'package:user_uber_app/resources/app_colors.dart';
 import 'package:user_uber_app/resources/routes/routes_name.dart';
+import 'package:user_uber_app/view/rate_driver_screen/rate_driver_screen.dart';
 import 'package:user_uber_app/widget/dragagble_sheet.dart';
 import 'package:user_uber_app/widget/drawer_widget.dart';
+import 'package:user_uber_app/widget/fare_amount_collection_dialog.dart';
 import 'package:user_uber_app/widget/progress_dialog.dart';
 
 class MainScreen extends StatefulWidget {
@@ -33,10 +36,10 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  // ! map controllers 
+  // ! map controllers
   final Completer<GoogleMapController> _googleMapController = Completer();
   GoogleMapController? newGoogleMapController;
-  // ! scaffold state 
+  // ! scaffold state
   GlobalKey<ScaffoldState> sKey = GlobalKey<ScaffoldState>();
 
   var geolocator = Geolocator();
@@ -55,6 +58,9 @@ class _MainScreenState extends State<MainScreen> {
   BitmapDescriptor? activeNearbyIcon;
   List<ActiveNearByAvalableDrivers> onlineNearbyDrivers = [];
   DatabaseReference? referenceRideRequest;
+  bool requestPositionInfo = true;
+  String driveRiderStatus = "Driver is Coming";
+  String userRideRequestStatus = "";
 
   // ! initial camereposition
 
@@ -67,7 +73,13 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     checkIfLocationPermissionAllowes();
+    locateUserPositioned();
   }
+
+  double? containerHeight = 220;
+  double? waitingResponseFromDriver = 0.0;
+  double? uiResponseFromDriver = 0.0;
+  StreamSubscription<DatabaseEvent>? driverSubscription;
 
   @override
   Widget build(BuildContext context) {
@@ -129,18 +141,238 @@ class _MainScreenState extends State<MainScreen> {
                       color: AppColors.blackColor,
                     )),
               ),
-            )
+            ),
             // * ui for searching locations
-            ,
             Positioned(
               bottom: 0,
               left: 0,
               right: 0,
-              child: AnimatedSize(
-                duration: const Duration(milliseconds: 120),
-                curve: Curves.bounceIn,
+              child: SizedBox(
+                height: containerHeight,
+                child: SingleChildScrollView(
+                  child: AnimatedSize(
+                    duration: const Duration(milliseconds: 120),
+                    curve: Curves.bounceIn,
+                    child: Container(
+                      height: containerHeight,
+                      decoration: const BoxDecoration(
+                        color: Colors.black45,
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(22.0),
+                          topLeft: Radius.circular(22.0),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 18),
+                        child: Column(children: [
+                          InkWell(
+                            onTap: () async {
+                              var result = await BottomDraggableSheet()
+                                  .show(context, true);
+                              if (result != null) {
+                                setState(() {
+                                  openNavigationDrawer = false;
+                                });
+                                await drawPolyline();
+                                if (kDebugMode) {
+                                  print("pop");
+                                }
+                              } else {
+                                if (kDebugMode) {
+                                  print("not pop");
+                                }
+                              }
+                            },
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.add_location_alt_outlined,
+                                  color: AppColors.greyColor,
+                                ),
+                                const Gap(16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "From",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall!
+                                            .copyWith(
+                                              color: AppColors.greyColor,
+                                            ),
+                                      ),
+                                      Consumer<AppInfo>(
+                                          builder: (context, value, _) =>
+                                              value.userPickUpAddress != null
+                                                  ? Text(
+                                                      value.userPickUpAddress!
+                                                          .locationName
+                                                          .toString(),
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .labelMedium!
+                                                          .copyWith(
+                                                              color: AppColors
+                                                                  .greyColor,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis),
+                                                    )
+                                                  : Text(
+                                                      "your current location",
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .labelMedium!
+                                                          .copyWith(
+                                                              color: AppColors
+                                                                  .greyColor,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis),
+                                                    )),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                          const Gap(10),
+                          const Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: AppColors.greyColor,
+                          ),
+                          const Gap(16),
+                          InkWell(
+                            onTap: () async {
+                              var result = await BottomDraggableSheet()
+                                  .show(context, false);
+                              if (result != null) {
+                                setState(() {
+                                  openNavigationDrawer = false;
+                                });
+                                await drawPolyline();
+
+                                if (kDebugMode) {
+                                  print("pop");
+                                }
+                              } else {
+                                if (kDebugMode) {
+                                  print("not pop");
+                                }
+                              }
+                            },
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.add_location_alt_outlined,
+                                  color: AppColors.greyColor,
+                                ),
+                                const Gap(16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "To",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall!
+                                            .copyWith(
+                                              color: AppColors.greyColor,
+                                            ),
+                                      ),
+                                      Consumer<AppInfo>(
+                                        builder: (context, value, _) => value
+                                                    .dropOfPickUpAddress !=
+                                                null
+                                            ? Text(
+                                                value.dropOfPickUpAddress!
+                                                    .locationName!,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelMedium!
+                                                    .copyWith(
+                                                        color:
+                                                            AppColors.greyColor,
+                                                        overflow: TextOverflow
+                                                            .ellipsis),
+                                              )
+                                            : Text(
+                                                "where to go?",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelMedium!
+                                                    .copyWith(
+                                                        color:
+                                                            AppColors.greyColor,
+                                                        overflow: TextOverflow
+                                                            .ellipsis),
+                                              ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                          const Gap(10),
+                          const Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: AppColors.greyColor,
+                          ),
+                          const Gap(16),
+                          ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(8.0))),
+                              onPressed: () {
+                                if (context
+                                            .read<AppInfo>()
+                                            .dropOfPickUpAddress ==
+                                        null ||
+                                    context.read<AppInfo>().userPickUpAddress ==
+                                        null) {
+                                  Fluttertoast.showToast(
+                                      msg: "Please selected location");
+                                } else {
+                                  saveRideRequestInformation();
+                                }
+                              },
+                              child: Text(
+                                "Request a Ride",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelMedium!
+                                    .copyWith(
+                                      color: AppColors.whiteColor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ))
+                        ]),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // * ui for waiting from driver
+            Positioned(
+              bottom: 0,
+              right: 0,
+              left: 0,
+              child: SizedBox(
+                height: waitingResponseFromDriver,
                 child: Container(
-                  height: context.screenHeight * .3,
+                  height: waitingResponseFromDriver,
                   decoration: const BoxDecoration(
                     color: Colors.black45,
                     borderRadius: BorderRadius.only(
@@ -148,197 +380,125 @@ class _MainScreenState extends State<MainScreen> {
                       topLeft: Radius.circular(22.0),
                     ),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 18),
-                    child: Column(children: [
-                      InkWell(
-                        onTap: () async {
-                          var result =
-                              await BottomDraggableSheet().show(context, true);
-                          if (result != null) {
-                            setState(() {
-                              openNavigationDrawer = false;
-                            });
-                            await drawPolyline();
-                            if (kDebugMode) {
-                              print("pop");
-                            }
-                          } else {
-                            if (kDebugMode) {
-                              print("not pop");
-                            }
-                          }
-                        },
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.add_location_alt_outlined,
-                              color: AppColors.greyColor,
-                            ),
-                            const Gap(16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "From",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall!
-                                        .copyWith(
-                                          color: AppColors.greyColor,
-                                        ),
-                                  ),
-                                  Consumer<AppInfo>(
-                                      builder: (context, value, _) =>
-                                          value.userPickUpAddress != null
-                                              ? Text(
-                                                  value.userPickUpAddress!
-                                                      .locationName
-                                                      .toString(),
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .labelMedium!
-                                                      .copyWith(
-                                                          color: AppColors
-                                                              .greyColor,
-                                                          overflow: TextOverflow
-                                                              .ellipsis),
-                                                )
-                                              : Text(
-                                                  "your current location",
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .labelMedium!
-                                                      .copyWith(
-                                                          color: AppColors
-                                                              .greyColor,
-                                                          overflow: TextOverflow
-                                                              .ellipsis),
-                                                )),
-                                ],
-                              ),
-                            )
-                          ],
+                  child: Center(
+                    child: AnimatedTextKit(repeatForever: true, animatedTexts: [
+                      FadeAnimatedText(
+                        "Waiting for Response\n from driver...",
+                        textAlign: TextAlign.center,
+                        duration: const Duration(seconds: 10),
+                        textStyle: const TextStyle(
+                          fontSize: 30.0,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
-                      const Gap(10),
-                      const Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: AppColors.greyColor,
-                      ),
-                      const Gap(16),
-                      InkWell(
-                        onTap: () async {
-                          var result =
-                              await BottomDraggableSheet().show(context, false);
-                          if (result != null) {
-                            setState(() {
-                              openNavigationDrawer = false;
-                            });
-                            await drawPolyline();
-
-                            if (kDebugMode) {
-                              print("pop");
-                            }
-                          } else {
-                            if (kDebugMode) {
-                              print("not pop");
-                            }
-                          }
-                        },
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.add_location_alt_outlined,
-                              color: AppColors.greyColor,
-                            ),
-                            const Gap(16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "To",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall!
-                                        .copyWith(
-                                          color: AppColors.greyColor,
-                                        ),
-                                  ),
-                                  Consumer<AppInfo>(
-                                    builder: (context, value, _) => value
-                                                .dropOfPickUpAddress !=
-                                            null
-                                        ? Text(
-                                            value.dropOfPickUpAddress!
-                                                .locationName!,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelMedium!
-                                                .copyWith(
-                                                    color: AppColors.greyColor,
-                                                    overflow:
-                                                        TextOverflow.ellipsis),
-                                          )
-                                        : Text(
-                                            "where to go?",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelMedium!
-                                                .copyWith(
-                                                    color: AppColors.greyColor,
-                                                    overflow:
-                                                        TextOverflow.ellipsis),
-                                          ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          ],
+                      ScaleAnimatedText(
+                        "Please wait...",
+                        duration: const Duration(seconds: 10),
+                        textAlign: TextAlign.center,
+                        textStyle: const TextStyle(
+                          fontSize: 32.0,
+                          fontFamily: 'Canterbury',
+                          color: Colors.white,
                         ),
                       ),
-                      const Gap(10),
-                      const Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: AppColors.greyColor,
-                      ),
-                      const Gap(16),
-                      ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0))),
-                          onPressed: () {
-                            if (context.read<AppInfo>().dropOfPickUpAddress ==
-                                    null ||
-                                context.read<AppInfo>().userPickUpAddress ==
-                                    null) {
-                              Fluttertoast.showToast(
-                                  msg: "Please selected location");
-                            } else {
-                              saveRideRequestInformation();
-                            }
-                          },
-                          child: Text(
-                            "Request a Ride",
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium!
-                                .copyWith(
-                                  color: AppColors.whiteColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ))
                     ]),
                   ),
                 ),
               ),
-            )
+            ),
+            // * ui for when driver accepts the ride
+            Positioned(
+                bottom: 0,
+                right: 0,
+                left: 0,
+                child: SizedBox(
+                    height: uiResponseFromDriver,
+                    child: Container(
+                      height: uiResponseFromDriver,
+                      decoration: const BoxDecoration(
+                        color: Colors.black45,
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(22.0),
+                          topLeft: Radius.circular(22.0),
+                        ),
+                      ),
+                      child: SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 20,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Center(
+                                child: Text(
+                                  driveRiderStatus,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelMedium!
+                                      .copyWith(
+                                        fontSize: 22,
+                                        color: Colors.white54,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                              ),
+                              const Gap(24.0),
+                              const Divider(
+                                height: 2,
+                                thickness: 2,
+                                color: Colors.white54,
+                              ),
+                              const Gap(24.0),
+                              // * driver vehicle details
+                              Text(
+                                cardetails!,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelMedium!
+                                    .copyWith(
+                                      color: Colors.white54,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                              // * driver name
+                              Text(
+                                driverName!,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelMedium!
+                                    .copyWith(
+                                      color: Colors.white54,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                              const Gap(5.0),
+                              // * call driver button
+                              Center(
+                                child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green),
+                                    onPressed: () {},
+                                    icon: const Icon(
+                                      Icons.phone_android,
+                                      color: Colors.black54,
+                                      size: 22,
+                                    ),
+                                    label: const Text(
+                                      "Call Driver",
+                                      style: TextStyle(
+                                        color: Colors.black54,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    )))
           ],
         ),
       ),
@@ -546,8 +706,134 @@ class _MainScreenState extends State<MainScreen> {
 
     referenceRideRequest!.set(userInformaionMap);
 
+    driverSubscription = referenceRideRequest!.onValue.listen((event) async {
+      if (event.snapshot.value == null) {
+        return;
+      }
+      if ((event.snapshot.value as Map)["car_details"] != null) {
+        setState(() {
+          cardetails = (event.snapshot.value as Map)["car_details"].toString();
+        });
+      }
+      if ((event.snapshot.value as Map)["driverName"] != null) {
+        setState(() {
+          driverName = (event.snapshot.value as Map)["driverName"].toString();
+        });
+      }
+      if ((event.snapshot.value as Map)["driverPhone"] != null) {
+        setState(() {
+          driverPhone = (event.snapshot.value as Map)["driverPhone"].toString();
+        });
+      }
+      if ((event.snapshot.value as Map)["status"] != null) {
+        userRideRequestStatus =
+            (event.snapshot.value as Map)["status"].toString();
+      }
+
+      if ((event.snapshot.value as Map)["driverLocation"] != null) {
+        double driverCurrentlat =
+            (event.snapshot.value as Map)["driverLocation"]["latitude"];
+        double driverCurrentlng =
+            (event.snapshot.value as Map)["driverLocation"]["longitude"];
+
+        LatLng driverCurrentPositionlatLng =
+            LatLng(driverCurrentlat, driverCurrentlng);
+        if (userRideRequestStatus == "accepted") {
+          updateArrivalTimeToUserPickUpLocation(driverCurrentPositionlatLng);
+        }
+
+        if (userRideRequestStatus == "arrived") {
+          setState(() {
+            driveRiderStatus = "Driver has Arrived";
+          });
+        }
+
+        if (userRideRequestStatus == "onTrip") {
+          updateDestinationTimeToUserPickUpLocation(
+              driverCurrentPositionlatLng);
+        }
+
+        if (userRideRequestStatus == "ended") {
+          if ((event.snapshot.value as Map)["fareAmount"] != null) {
+            double fareAmount = double.parse(
+                (event.snapshot.value as Map)["fareAmount"].toString());
+            var response = await showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) =>
+                  FareAmountCollectionDialog(totalfare: fareAmount),
+            );
+            if (response == "payCash") {
+              // * User can rate the driver now
+              if ((event.snapshot.value as Map)["driverId"] != null) {
+                String assignedDriverId =
+                    (event.snapshot.value as Map)["driverId"].toString();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        RateDriverScreen(assignedDriverId: assignedDriverId),
+                  ),
+                );
+                referenceRideRequest!.onDisconnect();
+                driverSubscription!.cancel();
+              }
+            }
+          }
+        }
+      }
+    });
+
     onlineNearbyDrivers = GeoFireAssistant.activeNearByAvailableDriversList;
     searchNeariestDriver();
+  }
+
+  // ! updateReachingTime
+  updateDestinationTimeToUserPickUpLocation(driverCurrentPositionlatLng) async {
+    if (requestPositionInfo == true) {
+      requestPositionInfo = false;
+      var dropOffLocation =
+          Provider.of<AppInfo>(context, listen: false).dropOfPickUpAddress;
+      LatLng userDestinationPosition = LatLng(
+        dropOffLocation!.locationLatitude!,
+        dropOffLocation.locationLongitude!,
+      );
+      var directionDetailsInfo =
+          await AsistantsMethod.obtainedOriginToDestinationDirectionDetails(
+        driverCurrentPositionlatLng,
+        userDestinationPosition,
+      );
+      if (directionDetailsInfo == null) {
+        return;
+      }
+      setState(() {
+        driveRiderStatus =
+            "Going toward Destination :: ${directionDetailsInfo.duration_text}";
+      });
+      requestPositionInfo = true;
+    }
+  }
+
+  // ! updateArrivalTime
+  updateArrivalTimeToUserPickUpLocation(driverCurrentPositionlatLng) async {
+    if (requestPositionInfo == true) {
+      requestPositionInfo = false;
+      LatLng userPickUpPosition = LatLng(
+        userCurrentPosition!.latitude,
+        userCurrentPosition!.longitude,
+      );
+      var directionDetailsInfo =
+          await AsistantsMethod.obtainedOriginToDestinationDirectionDetails(
+              driverCurrentPositionlatLng, userPickUpPosition);
+      if (directionDetailsInfo == null) {
+        return;
+      }
+      setState(() {
+        driveRiderStatus =
+            "Driver is Coming :: ${directionDetailsInfo.duration_text!.toString()}";
+      });
+      requestPositionInfo = true;
+    }
   }
 
   // ! search nearest drivers
@@ -577,12 +863,13 @@ class _MainScreenState extends State<MainScreen> {
 
   // ! reteriveOnlinedriver
 
-  Future<void> reteriveOnlineDriver(List onlinesNearbyDrivers) async {
+  Future<void> reteriveOnlineDriver(
+      List<ActiveNearByAvalableDrivers> onlineNearbyDrivers) async {
     DatabaseReference databaseReference =
         FirebaseDatabase.instance.ref().child("drivers");
-    for (int i = 0; i < onlinesNearbyDrivers.length; i++) {
+    for (int i = 0; i < onlineNearbyDrivers.length; i++) {
       await databaseReference
-          .child(onlinesNearbyDrivers[i].driverId.toString())
+          .child(onlineNearbyDrivers[i].driverId.toString())
           .once()
           .then((datasnapshot) async {
         var driverInfo = datasnapshot.snapshot.value;
@@ -600,6 +887,26 @@ class _MainScreenState extends State<MainScreen> {
               .then((snapshot) {
             if (snapshot.snapshot.value != null) {
               sendNotificationToDriver(chooseDriverId!);
+
+              // waiting ui
+              showWaitingResponseUi();
+
+              // * rider  cancel the request
+              FirebaseDatabase.instance
+                  .ref()
+                  .child("drivers")
+                  .child(chooseDriverId!)
+                  .child("newRideStatus")
+                  .onValue
+                  .listen((eventSnapshot) {
+                if (eventSnapshot.snapshot.value == "idle") {
+                  Fluttertoast.showToast(msg: "Rider Cancelled the request ");
+                  SystemNavigator.pop();
+                }
+                if (eventSnapshot.snapshot.value == "accepted") {
+                  showUIForAssignDriverInfo();
+                }
+              });
             }
           });
         } else {
@@ -607,6 +914,23 @@ class _MainScreenState extends State<MainScreen> {
         }
       });
     }
+  }
+
+  // ! show notification waiting
+  showWaitingResponseUi() async {
+    setState(() {
+      containerHeight = 0.0;
+      waitingResponseFromDriver = 220;
+    });
+  }
+
+  // ! showUiForAssignDriverInfo
+  showUIForAssignDriverInfo() {
+    setState(() {
+      containerHeight = 0.0;
+      waitingResponseFromDriver = 0.0;
+      uiResponseFromDriver = 220;
+    });
   }
 
   // ! send notification to driver
@@ -619,6 +943,26 @@ class _MainScreenState extends State<MainScreen> {
         .child(chooseDriver)
         .child("newRideStatus")
         .set(referenceRideRequest!.key);
+
+    // ! automated the push notification
+    FirebaseDatabase.instance
+        .ref()
+        .child("drivers")
+        .child(chooseDriver)
+        .child("token")
+        .once()
+        .then((value) {
+      if (value.snapshot.value != null) {
+        String driversDevicesToken = value.snapshot.value.toString();
+
+        AsistantsMethod.sendNotification(
+            driversDevicesToken, referenceRideRequest!.key.toString());
+        Fluttertoast.showToast(msg: "Notification sent Successfully");
+      } else {
+        Fluttertoast.showToast(msg: "Please choose another driver...");
+        return;
+      }
+    });
   }
 
   // ! user current location
@@ -641,12 +985,14 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
 
-    // * get the formatted address 
+    // * get the formatted address
     // ignore: use_build_context_synchronously
     await AsistantsMethod.searchAddressFromLangitudeandLatitude(
         userCurrentPosition!, context);
 
     getDriverLiveLocation();
+
+     AsistantsMethod.readTripOnlineUser(context);
   }
 
   // ! user location permission
@@ -661,9 +1007,127 @@ class _MainScreenState extends State<MainScreen> {
 
   // ! drawe polyline
 
-  Future<void> drawPolyline() async {
+  Future<void>? drawPolyline(
+      {LatLng? origindestinations, LatLng? destinationLatLngs}) async {
     var originPositioned = context.read<AppInfo>().userPickUpAddress!;
     var destinationPositioned = context.read<AppInfo>().dropOfPickUpAddress!;
+    if (origindestinations != null || destinationLatLngs != null) {
+      var origindestination =
+          LatLng(origindestinations!.latitude, origindestinations.longitude);
+      var destinationLatLng =
+          LatLng(destinationLatLngs!.latitude, destinationLatLngs.longitude);
+
+      showDialog(
+          context: context,
+          builder: (BuildContext context) => ProgressDialog(
+                message: "Please wait...",
+              ));
+
+      var directionDetailInfo =
+          await AsistantsMethod.obtainedOriginToDestinationDirectionDetails(
+        origindestination,
+        destinationLatLng,
+      );
+      setState(() {
+        tripDistanceInfoModel = directionDetailInfo;
+      });
+
+      Navigator.pop(context);
+      PolylinePoints polylinePoints = PolylinePoints();
+      List<PointLatLng> decodePpointsResult =
+          polylinePoints.decodePolyline(directionDetailInfo!.e_points!);
+
+      points.clear();
+      if (decodePpointsResult.isNotEmpty) {
+        for (var position in decodePpointsResult) {
+          points.add(LatLng(position.latitude, position.longitude));
+        }
+      }
+      pLineCordinates.clear();
+      setState(() {
+        Polyline polyline = Polyline(
+          polylineId: const PolylineId("PolylineId"),
+          points: points,
+          color: const Color(0xff7fbefb),
+          geodesic: true,
+          jointType: JointType.round,
+          width: 2,
+          endCap: Cap.roundCap,
+          startCap: Cap.roundCap,
+        );
+        pLineCordinates.add(polyline);
+      });
+      LatLngBounds latLngBounds;
+      if (origindestination.latitude > destinationLatLng.latitude &&
+          origindestination.longitude > destinationLatLng.longitude) {
+        latLngBounds = LatLngBounds(
+          southwest: destinationLatLng,
+          northeast: origindestination,
+        );
+      } else if (origindestination.latitude > destinationLatLng.latitude) {
+        latLngBounds = LatLngBounds(
+          southwest:
+              LatLng(destinationLatLng.latitude, origindestination.longitude),
+          northeast:
+              LatLng(origindestination.latitude, destinationLatLng.longitude),
+        );
+      } else if (origindestination.longitude > destinationLatLng.longitude) {
+        latLngBounds = LatLngBounds(
+          southwest:
+              LatLng(origindestination.latitude, destinationLatLng.longitude),
+          northeast:
+              LatLng(destinationLatLng.latitude, origindestination.longitude),
+        );
+      } else {
+        latLngBounds = LatLngBounds(
+          southwest: origindestination,
+          northeast: destinationLatLng,
+        );
+      }
+      newGoogleMapController!.animateCamera(CameraUpdate.newLatLngBounds(
+        latLngBounds,
+        100,
+      ));
+
+      Marker originMarker = Marker(
+        markerId: const MarkerId("originMarker"),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        position: origindestination,
+      );
+
+      Marker destinationMarker = Marker(
+        markerId: const MarkerId("destinationMarker"),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+        position: destinationLatLng,
+      );
+
+      setState(() {
+        marker.add(originMarker);
+        marker.add(destinationMarker);
+      });
+
+      Circle orginCircle = Circle(
+        circleId: const CircleId("originCircle"),
+        center: origindestination,
+        radius: 18,
+        strokeWidth: 2,
+        strokeColor: AppColors.whiteColor,
+        fillColor: const Color(0xff7fbefb),
+      );
+      Circle destinationCircle = Circle(
+        circleId: const CircleId("destinationCircle"),
+        center: destinationLatLng,
+        radius: 18,
+        strokeWidth: 2,
+        strokeColor: AppColors.whiteColor,
+        fillColor: const Color(0xff7fbefb),
+      );
+
+      setState(() {
+        circle.add(orginCircle);
+        circle.add(destinationCircle);
+      });
+    }
 
     var origindestination = LatLng(originPositioned.locationLatitude!,
         originPositioned.locationLongitude!);
@@ -828,7 +1292,7 @@ class _MainScreenState extends State<MainScreen> {
             break;
 
           case Geofire.onGeoQueryReady:
-          // ! when driver is ready to go 
+            // ! when driver is ready to go
             activeNearByDriverKeyLoaded = true;
             displayActiveDriversOnUserApp();
             break;
