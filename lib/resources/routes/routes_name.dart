@@ -7,4 +7,5 @@ class RouteNames {
   static const selectedDriver = "selected_driver_screen";
   static const tripsHistoryScreen = "trips_history_screen";
   static const profileScreen = "profile_screen";
+  static const aboutScreen = "about_screen";
 }

@@ -105,7 +105,9 @@ class _SelectedDriversScreenState extends State<SelectedDriversScreen> {
                     ),
                     RatingBar(
                       onRatingUpdate: (rating) {},
-                      initialRating: 3.75,
+                      initialRating: driverslist[index]["rating"] == null
+                          ? 0.0
+                          : double.parse(driverslist[index]["ratings"]),
                       ratingWidget: RatingWidget(
                         full: const Icon(
                           Icons.star,

@@ -2,6 +2,7 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:user_uber_app/resources/routes/routes_name.dart';
+import 'package:user_uber_app/view/about_screen/about_screen.dart';
 import 'package:user_uber_app/view/chosse_location_from_map/choose_location_from_map.dart';
 import 'package:user_uber_app/view/loginScreen/login_screen.dart';
 import 'package:user_uber_app/view/mainScreen/main_screen.dart';
@@ -42,6 +43,8 @@ class Routes {
         return MaterialPageRoute(builder: (context) => const TripHistoryScreen());
       case RouteNames.profileScreen:
         return MaterialPageRoute(builder: (context) => const ProfileScreen());
+      case RouteNames.aboutScreen:
+        return MaterialPageRoute(builder: (context) => const AboutScreen());
       default:
         return MaterialPageRoute(builder: (ctx) {
           return const Scaffold(

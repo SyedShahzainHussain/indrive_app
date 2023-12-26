@@ -86,7 +86,7 @@ class _DrawerWidgetState extends State<DrawerWidget> {
             const Gap(12),
             ListTile(
               onTap: () {
-                  Navigator.pushNamed(context, RouteNames.profileScreen);
+                Navigator.pushNamed(context, RouteNames.profileScreen);
               },
               leading: const Icon(
                 Icons.person,
@@ -101,7 +101,9 @@ class _DrawerWidgetState extends State<DrawerWidget> {
             ),
             const Gap(12),
             ListTile(
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, RouteNames.aboutScreen);
+              },
               leading: const Icon(
                 Icons.info,
                 color: Colors.white54,
